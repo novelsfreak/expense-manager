@@ -134,8 +134,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler (Express 5 compatible - no wildcard)
+app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     path: req.originalUrl

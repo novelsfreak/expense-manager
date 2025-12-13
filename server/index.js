@@ -143,8 +143,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404 handler for undefined routes
-app.use('*', (req, res) => {
+// 404 handler for undefined routes (Express 5 compatible)
+app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     path: req.originalUrl,
