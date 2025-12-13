@@ -17,12 +17,19 @@ function App() {
   const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined)
 
   useEffect(() => {
-    loadExpenses()
-  }, [])
+    if (user) {
+      loadExpenses()
+    }
+  }, [user])
 
   const loadExpenses = async () => {
-    const allExpenses = await getExpenses()
-    setExpenses(allExpenses)
+    try {
+      const allExpenses = await getExpenses()
+      console.log('Loaded expenses:', allExpenses.length)
+      setExpenses(allExpenses)
+    } catch (error) {
+      console.error('Error loading expenses:', error)
+    }
   }
 
   const handleAddExpense = async (expense: Expense) => {
@@ -63,11 +70,25 @@ function App() {
   const getAvailableMonths = () => {
     const months = new Set<string>()
     expenses.forEach(expense => {
-      const date = new Date(expense.date)
-      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      months.add(month)
+      if (expense.date) {
+        try {
+          const date = new Date(expense.date)
+          if (!isNaN(date.getTime())) {
+            const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+            months.add(month)
+          }
+        } catch (error) {
+          console.error('Error parsing date:', expense.date, error)
+        }
+      }
     })
-    return Array.from(months).sort().reverse()
+    const sortedMonths = Array.from(months).sort().reverse()
+    // If no months found but we have expenses, show current month
+    if (sortedMonths.length === 0 && expenses.length > 0) {
+      const now = new Date()
+      return [`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`]
+    }
+    return sortedMonths
   }
 
   const formatMonthLabel = (month: string) => {
@@ -129,14 +150,25 @@ function App() {
                     </option>
                   ))
                 ) : (
-                  <option value={selectedMonth}>
-                    {formatMonthLabel(selectedMonth)}
-                  </option>
+                  <>
+                    <option value={selectedMonth}>
+                      {formatMonthLabel(selectedMonth)}
+                    </option>
+                    {/* Show all months if no expenses yet */}
+                    {expenses.length === 0 && (
+                      <option value={selectedMonth}>
+                        {formatMonthLabel(selectedMonth)} (No expenses)
+                      </option>
+                    )}
+                  </>
                 )}
               </select>
             </div>
             <div className="text-sm text-gray-600">
               {filteredExpenses.length} expense{filteredExpenses.length !== 1 ? 's' : ''} this month
+              {expenses.length > 0 && (
+                <span className="ml-2 text-xs">({expenses.length} total)</span>
+              )}
             </div>
           </div>
         </div>

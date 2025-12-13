@@ -6,7 +6,7 @@ interface ExpenseSummaryProps {
   selectedMonth?: string
 }
 
-const ExpenseSummary = ({ expenses, selectedMonth }: ExpenseSummaryProps) => {
+const ExpenseSummary = ({ expenses }: ExpenseSummaryProps) => {
   const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0)
   
   const categoryTotals = categories.map(category => {
