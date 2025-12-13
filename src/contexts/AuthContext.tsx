@@ -17,9 +17,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// For Vercel: use relative paths (handled by rewrites)
+// For local dev: use localhost
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
-  : 'http://localhost:3001/api';
+  : import.meta.env.DEV 
+    ? 'http://localhost:3001/api'
+    : '/api';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
