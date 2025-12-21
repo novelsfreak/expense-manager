@@ -10,6 +10,7 @@
     "server": "node server/index.js",
     "migrate": "node server/migrate.js",
     "migrate-user-expenses": "node server/migrate-user-expenses.js",
+    "migrate-usd-to-aud": "node server/migrate-usd-to-aud.js",
     "setup-atlas": "node setup-mongodb-atlas.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

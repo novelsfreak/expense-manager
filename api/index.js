@@ -4,6 +4,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import Expense from '../server/models/Expense.js';
 import authRoutes from '../server/routes/auth.js';
+import financialRoutes from '../server/routes/financial.js';
 import { authenticateToken } from '../server/middleware/auth.js';
 
 const app = express();
@@ -45,6 +46,12 @@ app.get('/', (req, res) => {
 
 // Auth Routes (public)
 app.use('/api/auth', authRoutes);
+
+// Financial Routes (protected)
+app.use('/api/financial', financialRoutes);
+
+// Financial Routes (protected)
+app.use('/api/financial', financialRoutes);
 
 // Protected API Routes - require authentication
 app.get('/api/expenses', authenticateToken, async (req, res) => {

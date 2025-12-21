@@ -1,12 +1,32 @@
 import type { Expense } from '../types/expense'
 
-// For Vercel: use relative paths (handled by rewrites)
-// For local dev: use localhost
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : import.meta.env.DEV 
-    ? 'http://localhost:3001/api'
-    : '/api'
+// Detect API base URL dynamically
+// - If VITE_API_URL is set, use it
+// - If in dev mode, detect current host and use port 3001 for API
+// - In production, use relative paths
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL}/api`;
+  }
+  
+  if (import.meta.env.DEV) {
+    // In dev mode, detect the current host (works for localhost and Tailscale IPs)
+    const host = window.location.hostname;
+    const port = '3001';
+    return `http://${host}:${port}/api`;
+  }
+  
+  // Production: use relative paths
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug: Log API URL in dev mode
+if (import.meta.env.DEV) {
+  console.log('🔗 API Base URL:', API_BASE_URL);
+  console.log('🌐 Current hostname:', window.location.hostname);
+}
 
 // Helper to get auth token
 const getAuthToken = () => {

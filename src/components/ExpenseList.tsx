@@ -70,7 +70,7 @@ const ExpenseList = ({ expenses, onEdit, onDelete }: ExpenseListProps) => {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-xl font-bold text-gray-800">
-                  ${expense.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${expense.amount.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               

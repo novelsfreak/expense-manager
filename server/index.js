@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Expense from './models/Expense.js';
 import authRoutes from './routes/auth.js';
+import financialRoutes from './routes/financial.js';
 import { authenticateToken } from './middleware/auth.js';
 
 // Load environment variables
@@ -14,8 +15,36 @@ const PORT = process.env.PORT || 3001;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/expense-manager';
 
 // Middleware
+// Allow CORS from localhost, Tailscale IPs (100.x.x.x), and any configured FRONTEND_URL
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      /^http:\/\/100\.\d+\.\d+\.\d+:\d+$/, // Tailscale IPs (100.x.x.x)
+      /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/, // Any IP address (for local network access)
+    ].filter(Boolean);
+    
+    // Check if origin matches any allowed pattern
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed;
+      }
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed || !process.env.FRONTEND_URL) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -49,6 +78,9 @@ app.get('/', (req, res) => {
 
 // Auth Routes (public)
 app.use('/api/auth', authRoutes);
+
+// Financial Routes (protected)
+app.use('/api/financial', financialRoutes);
 
 // Protected API Routes - require authentication
 // GET /api/expenses - Get all expenses for logged-in user
@@ -168,4 +200,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Database: ${MONGODB_URI.includes('mongodb.net') ? 'MongoDB Atlas (Cloud)' : 'Local MongoDB'}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Server ready to accept connections`);
+  console.log(`🔗 Accessible at:`);
+  console.log(`   - http://localhost:${PORT}`);
+  console.log(`   - http://0.0.0.0:${PORT}`);
+  console.log(`   - http://<your-tailscale-ip>:${PORT}`);
+  console.log(`💡 Use 'tailscale ip' to get your Tailscale IP address`);
 });

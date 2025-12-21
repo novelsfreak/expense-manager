@@ -1,26 +1,90 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { Expense } from './types/expense'
+import type { Salary, SIP, FixedDeposit, RecurringDeposit, Savings, Stock } from './types/financial'
 import { getExpenses, addExpense, updateExpense, deleteExpense } from './utils/storage'
+import { getSalary, getSIPs, getFixedDeposits, getRecurringDeposits, getSavings, getStocks, calculateFinancialOverview } from './utils/financial'
 import ExpenseForm from './components/ExpenseForm'
 import ExpenseList from './components/ExpenseList'
 import ExpenseSummary from './components/ExpenseSummary'
+import FinancialOverview from './components/FinancialOverview'
+import SalarySettings from './components/SalarySettings'
+import SavingsSettings from './components/SavingsSettings'
+import InvestmentDashboard from './components/InvestmentDashboard'
+import StocksPortfolio from './components/StocksPortfolio'
 import Login from './components/Login'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
   const { user, logout, loading } = useAuth()
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [salary, setSalary] = useState<Salary>({ monthlySalary: 0, currency: 'AUD', conversionRate: 1 })
+  const [sips, setSIPs] = useState<SIP[]>([])
+  const [fixedDeposits, setFixedDeposits] = useState<FixedDeposit[]>([])
+  const [recurringDeposits, setRecurringDeposits] = useState<RecurringDeposit[]>([])
+  const [savings, setSavings] = useState<Savings>({ currentBalance: 0, currency: 'AUD', conversionRate: 1, interestRate: 0 })
+  const [stocks, setStocks] = useState<Stock[]>([])
+  const [financialDataLoaded, setFinancialDataLoaded] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
   const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined)
+  const [activeTab, setActiveTab] = useState<'expenses' | 'financial'>('expenses')
 
   useEffect(() => {
     if (user) {
-      loadExpenses()
+      loadAllData()
     }
   }, [user])
+
+  const loadAllData = async () => {
+    await Promise.all([
+      loadExpenses(),
+      loadFinancialData(),
+    ])
+  }
+
+  const loadFinancialData = async () => {
+    try {
+      // Load stocks separately to handle 404 gracefully
+      const [salaryData, sipsData, fdsData, rdsData, savingsData] = await Promise.all([
+        getSalary(),
+        getSIPs(),
+        getFixedDeposits(),
+        getRecurringDeposits(),
+        getSavings(),
+      ])
+      
+      // Load stocks separately (may fail if route not available)
+      let stocksData: Stock[] = []
+      try {
+        stocksData = await getStocks()
+      } catch (error) {
+        console.warn('Could not load stocks (route may not be available):', error)
+      }
+      
+      console.log('Loaded financial data:', {
+        salary: salaryData,
+        salaryMonthly: salaryData.monthlySalary,
+        salaryCurrency: salaryData.currency,
+        sips: sipsData.length,
+        fds: fdsData.length,
+        rds: rdsData.length,
+        savings: savingsData,
+        stocks: stocksData.length,
+      })
+      setSalary(salaryData)
+      setSIPs(sipsData)
+      setFixedDeposits(fdsData)
+      setRecurringDeposits(rdsData)
+      setSavings(savingsData)
+      setStocks(stocksData)
+      setFinancialDataLoaded(true)
+    } catch (error) {
+      console.error('Error loading financial data:', error)
+      setFinancialDataLoaded(true) // Set to true even on error to prevent infinite loading
+    }
+  }
 
   const loadExpenses = async () => {
     try {
@@ -41,6 +105,21 @@ function App() {
     await loadExpenses()
     setEditingExpense(undefined)
   }
+
+  // Calculate financial overview - only calculate when we have data
+  const financialOverview = useMemo(() => {
+    console.log('Calculating financial overview with:', {
+      salary: salary.monthlySalary,
+      salaryCurrency: salary.currency,
+      expensesCount: expenses.length,
+      sipsCount: sips.length,
+      fdsCount: fixedDeposits.length,
+      rdsCount: recurringDeposits.length,
+      savings: savings.currentBalance,
+      stocksCount: stocks.length,
+    });
+    return calculateFinancialOverview(salary, expenses, sips, fixedDeposits, recurringDeposits, savings, stocks);
+  }, [salary, expenses, sips, fixedDeposits, recurringDeposits, savings, stocks])
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense)
@@ -130,10 +209,48 @@ function App() {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
             💰 Expense Manager
           </h1>
-          <p className="text-white/80 text-lg">Track and manage your monthly expenses</p>
+          <p className="text-white/80 text-lg">Track expenses, investments, and savings</p>
         </div>
 
-        {/* Month Selector */}
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-lg p-2 mb-6 flex gap-2">
+          <button
+            onClick={() => setActiveTab('expenses')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'expenses'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            💸 Expenses
+          </button>
+          <button
+            onClick={() => setActiveTab('financial')}
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'financial'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            💼 Financial Overview
+          </button>
+        </div>
+
+        {/* Financial Overview Tab */}
+        {activeTab === 'financial' && (
+          <>
+            <FinancialOverview overview={financialOverview} />
+            <SalarySettings />
+            <SavingsSettings />
+            <InvestmentDashboard />
+            <StocksPortfolio />
+          </>
+        )}
+
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && (
+          <>
+            {/* Month Selector */}
         <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
@@ -183,12 +300,14 @@ function App() {
           onCancel={editingExpense ? handleCancelEdit : undefined}
         />
 
-        {/* Expense List */}
-        <ExpenseList
-          expenses={filteredExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
-          onEdit={handleEditExpense}
-          onDelete={handleDeleteExpense}
-        />
+            {/* Expense List */}
+            <ExpenseList
+              expenses={filteredExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
+              onEdit={handleEditExpense}
+              onDelete={handleDeleteExpense}
+            />
+          </>
+        )}
       </div>
     </div>
   )

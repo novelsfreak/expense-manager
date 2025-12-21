@@ -35,7 +35,7 @@ const ExpenseSummary = ({ expenses }: ExpenseSummaryProps) => {
           <div className="text-2xl">💰</div>
         </div>
         <div className="text-3xl font-bold">
-          ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          ${totalAmount.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div className="text-sm opacity-75 mt-1">{expenses.length} transactions</div>
       </div>
