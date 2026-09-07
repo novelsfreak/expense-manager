@@ -23,7 +23,7 @@ function App() {
   const [recurringDeposits, setRecurringDeposits] = useState<RecurringDeposit[]>([])
   const [savings, setSavings] = useState<Savings>({ currentBalance: 0, currency: 'AUD', conversionRate: 1, interestRate: 0 })
   const [stocks, setStocks] = useState<Stock[]>([])
-  const [financialDataLoaded, setFinancialDataLoaded] = useState(false)
+  const [_financialDataLoaded, setFinancialDataLoaded] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
