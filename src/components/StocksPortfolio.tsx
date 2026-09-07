@@ -96,11 +96,6 @@ export default function StocksPortfolio() {
     ? stocks 
     : stocks.filter(stock => stock.market === activeMarket);
 
-  const marketTotals = {
-    Australian: stocks.filter(s => s.market === 'Australian').reduce((sum, s) => sum + (s.currentValue || 0), 0),
-    Indian: stocks.filter(s => s.market === 'Indian').reduce((sum, s) => sum + (s.currentValue || 0), 0),
-    US: stocks.filter(s => s.market === 'US').reduce((sum, s) => sum + (s.currentValue || 0), 0),
-  };
 
   const totalProfitLoss = stocks.reduce((sum, s) => sum + (s.profitLoss || 0), 0);
   const totalInvestment = stocks.reduce((sum, s) => sum + (s.totalInvestment || 0), 0);
