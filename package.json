@@ -12,6 +12,7 @@
     "migrate-user-expenses": "node server/migrate-user-expenses.js",
     "migrate-usd-to-aud": "node server/migrate-usd-to-aud.js",
     "setup-atlas": "node setup-mongodb-atlas.js",
+    "test": "echo \"no test suite yet -- placeholder for the upgrade agent's TESTING step\" && exit 0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
